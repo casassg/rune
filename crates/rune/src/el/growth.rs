@@ -10,6 +10,19 @@ impl El {
         self.cold_mut().growth = Some(Box::new(spec));
         self
     }
+    /// Stacks its flowing children on whole points, as a browser virtualizer that rounds each
+    /// row's measured height does (TanStack Virtual's `measureElement` returning
+    /// `Math.round(borderBoxSize.blockSize)`, placing each row at the running total): each
+    /// child's top rounds to a whole point and its box to its rounded height, so its rows' tops,
+    /// the heights a virtual list stores and the list's extent are whole points, which are whole
+    /// CSS px, at any scale. A child's content keeps its own layout from the child's top, so up
+    /// to half a point of it hangs below its box or is left empty. The list's own box grows or
+    /// shrinks by what the rounding adds up to; nothing after it in its parent moves, so a list
+    /// that opts in should end its scroll content. Off by default.
+    pub fn whole_rows(mut self) -> Self {
+        self.cold_mut().whole_rows = true;
+        self
+    }
     /// A growth-stack row that is streaming: slows near its target and reveals through the
     /// feathered edge.
     pub fn streaming(mut self, on: bool) -> Self {

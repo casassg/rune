@@ -36,6 +36,8 @@ pub(crate) struct NodeCold {
     /// `El::sticky_top`, `El::sticky_bottom` and `El::stuck_shadow`.
     pub(super) sticky: Option<Box<crate::el::Sticky>>,
     pub(super) growth: Option<Box<GrowthSpec>>,
+    /// `El::whole_rows`.
+    pub(super) whole_rows: bool,
     pub(super) glide: Option<crate::growth::FoldGlide>,
     pub(super) a11y: crate::el::A11y,
     /// The image ratio this picture's layout took, when it sizes one side from its pixels.
@@ -72,6 +74,7 @@ impl crate::cold::Empty for NodeCold {
         scroll_edges: crate::el::ScrollEdges { fade: 0.0, fade_style: crate::el::FadeStyle::SMOOTH, margin: 0.0, anchor: false },
         sticky: None,
         growth: None,
+        whole_rows: false,
         glide: None,
         a11y: crate::el::A11y::EMPTY,
         pixel_aspect: None,

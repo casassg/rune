@@ -35,6 +35,8 @@ pub(crate) struct ElCold {
     pub(crate) sticky: Option<Box<Sticky>>,
     pub(crate) scroll_edges: ScrollEdges,
     pub(crate) growth: Option<Box<GrowthSpec>>,
+    /// `El::whole_rows`: its flowing children stack on whole points.
+    pub(crate) whole_rows: bool,
     pub(crate) virtual_estimate: Option<f32>,
     /// Rows `El::virtual_rows` builds at layout time, in place of `children`.
     pub(crate) virtual_rows: Option<Rc<crate::el::virtual_rows::RowSource>>,
@@ -85,6 +87,7 @@ impl Empty for ElCold {
         sticky: None,
         scroll_edges: ScrollEdges { fade: 0.0, fade_style: crate::el::FadeStyle::SMOOTH, margin: 0.0, anchor: false },
         growth: None,
+        whole_rows: false,
         virtual_estimate: None,
         virtual_rows: None,
         virtual_rows_version: None,

@@ -80,6 +80,8 @@ impl<S: 'static> Measurement<'_, S> {
     pub(super) fn place(&mut self, taffy: &LayoutEngine, nodes: &mut [Node]) {
         self.node_index.clear();
         self.node_index.reserve(nodes.len());
+        // `El::whole_rows` lists placed so far, and how far rounding has moved the next row.
+        let mut whole: Vec<(usize, f32)> = Vec::new();
         for i in 0..nodes.len() {
             let id = if nodes[i].id != NodeId(0) {
                 debug_assert_eq!(self.path_ids.get(&nodes[i].path).copied(), Some(nodes[i].id));
@@ -97,6 +99,17 @@ impl<S: 'static> Measurement<'_, S> {
             if nodes[i].flow == Flow::Rtl {
                 l.inset.swap(0, 2);
             }
+            if let Some(p) = nodes[i].parent.filter(|&p| nodes[p].whole_rows)
+                && taffy.style(nodes[i].taffy).position() != taffy::style::Position::Absolute
+            {
+                let k = whole.iter().position(|w| w.0 == p).unwrap_or_else(|| {
+                    whole.push((p, 0.0));
+                    whole.len() - 1
+                });
+                let (y, h) = ((l.y + whole[k].1).round(), l.h.round());
+                whole[k].1 = y + h - (l.y + l.h);
+                (l.y, l.h) = (y, h);
+            }
             nodes[i].local = MRect::new(l.x, l.y, l.w, l.h);
             let (px, py) = nodes[i].parent.map_or((0.0, 0.0), |p| (nodes[p].target[0], nodes[p].target[1]));
             let mut x = px + l.x;
@@ -112,6 +125,11 @@ impl<S: 'static> Measurement<'_, S> {
             }
             nodes[i].target = [x, y, x + l.w, y + l.h];
             nodes[i].inset = l.inset;
+        }
+        // Each list's box takes what its rows' rounding added up to.
+        for (p, shift) in whole {
+            nodes[p].local.h += shift;
+            nodes[p].target[3] += shift;
         }
     }
 
