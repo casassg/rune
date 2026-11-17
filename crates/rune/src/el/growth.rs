@@ -18,7 +18,9 @@ impl El {
     /// CSS px, at any scale. A child's content keeps its own layout from the child's top, so up
     /// to half a point of it hangs below its box or is left empty. The list's own box grows or
     /// shrinks by what the rounding adds up to; nothing after it in its parent moves, so a list
-    /// that opts in should end its scroll content. Off by default.
+    /// that opts in should end its scroll content. Rows land whole only on a column with whole
+    /// padding and gap: the shift runs down its children, so a row-direction list would add up
+    /// its children's error. Off by default.
     pub fn whole_rows(mut self) -> Self {
         self.cold_mut().whole_rows = true;
         self
