@@ -1,0 +1,1 @@
+- `rune-luau`: `maxLines` on text nodes (`El::max_lines`), and `matched` and `matchedCrop` on any node (`El::matched`, `El::matched_crop`), so a script clamps a title to N lines and moves a card between parents as a shared element.

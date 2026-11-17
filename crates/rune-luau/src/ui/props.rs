@@ -87,6 +87,9 @@ atoms! {
     Tabular = "tabular",
     NoWrap = "noWrap",
     Truncate = "truncate",
+    MaxLines = "maxLines",
+    Matched = "matched",
+    MatchedCrop = "matchedCrop",
     Selectable = "selectable",
     TextAlign = "textAlign",
     Count = "count",
@@ -214,6 +217,7 @@ pub(crate) struct Props {
     text: TextStyle,
     color: Option<Color>,
     truncate: bool,
+    max_lines: Option<usize>,
     fade_out: bool,
     single_line: bool,
     wrap: bool,
@@ -245,6 +249,7 @@ impl Props {
             text: env.text,
             color: None,
             truncate: false,
+            max_lines: None,
             fade_out: false,
             single_line: false,
             wrap: false,
@@ -325,6 +330,9 @@ impl Props {
             }
             if self.wrap {
                 e.set_wrap();
+            }
+            if let Some(n) = self.max_lines {
+                with(e, |e| e.max_lines(n));
             }
             if self.selectable {
                 e.set_selectable(true);
@@ -590,6 +598,22 @@ impl Props {
                 }
             }
             Atom::Truncate => self.truncate = flag(v)?,
+            Atom::MaxLines => {
+                let n = num(v)?;
+                if n < 0.0 || n.fract() != 0.0 {
+                    return Err("maxLines must be a whole number, 0 or more".into());
+                }
+                self.max_lines = Some(n as usize);
+            }
+            Atom::Matched => {
+                let id = string(v)?.to_owned();
+                with(e, |e| e.matched(id));
+            }
+            Atom::MatchedCrop => {
+                if flag(v)? {
+                    with(e, El::matched_crop);
+                }
+            }
             Atom::Selectable => self.selectable = flag(v)?,
             Atom::TextAlign => {
                 self.text_align = Some(match v {

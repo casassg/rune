@@ -58,8 +58,8 @@ return {
   element keeps (`ui.text("{1} / {2}", VALUE, read, write)`). Props: `key`, `w`/`h` (points or `"full"`), `minW`..`maxH`, `grow`, `shrink`, `pad`,
   `px`..`pl`, `m`..`ml`, `gap`, `align`, `justify`, `center`, `wrap`, `fill`, `hover`, `press`,
   `border`, `borderWidth`, `radius`, `clip`, `scrollY`, `scrollX`, `opacity`, `role`, `label`,
-  `help`, `helpSide`, `dir` (`"ltr"`, `"rtl"` or `"auto"`), `pin`, `corners`, `shadow`, `selected`, `focusable`, `disabled`, `hoverTransition`, `hoverGroup`, `hoverGroupColor`, `revealOnHover`, `onPress`, `onMiddlePress` (a middle click: a `middle-press` event), `menuTrigger` (its `onPress` opens a menu: a mouse runs it as the button goes down, as Kobalte's `Menu.Trigger`; a key, a screen reader's Invoke or a tap runs it on the click), `onHover`, and for text `size`, `weight`, `lineHeight`, `tracking`, `color`, `mono`,
-  `tabular`, `noWrap`, `truncate`, `fadeOut`, `selectable`, `textAlign`. Colours are palette names or
+  `help`, `helpSide`, `matched` (a shared-element id, as `El::matched`), `matchedCrop`, `dir` (`"ltr"`, `"rtl"` or `"auto"`), `pin`, `corners`, `shadow`, `selected`, `focusable`, `disabled`, `hoverTransition`, `hoverGroup`, `hoverGroupColor`, `revealOnHover`, `onPress`, `onMiddlePress` (a middle click: a `middle-press` event), `menuTrigger` (its `onPress` opens a menu: a mouse runs it as the button goes down, as Kobalte's `Menu.Trigger`; a key, a screen reader's Invoke or a tap runs it on the click), `onHover`, and for text `size`, `weight`, `lineHeight`, `tracking`, `color`, `mono`,
+  `tabular`, `noWrap`, `truncate`, `maxLines` (a whole number, as `Text::max_lines`), `fadeOut`, `selectable`, `textAlign`. Colours are palette names or
   `ui.hex("#rrggbb")`.
 - **`view:Memo(key, version, build)`** reuses the subtree while `version` (a string, number or
   boolean) is unchanged, without calling `build`. Its memo id, and its root's key, is `key` under

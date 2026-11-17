@@ -10,6 +10,8 @@ pub(crate) mod host;
 pub(crate) mod nodes;
 pub(crate) mod props;
 pub(crate) mod rows;
+#[cfg(test)]
+mod tests;
 pub(crate) mod view;
 
 use std::cell::{Cell, RefCell};
