@@ -1,0 +1,1 @@
+- Video: H.264 tagged with matrix_coefficients 5 (BT.470BG) or 6 (SMPTE 170M), which AVFoundation reports as the unnamed `YCbCrMatrix#5` and `YCbCrMatrix#6`, plays as BT.601 instead of failing with "unsupported YCbCr matrix".

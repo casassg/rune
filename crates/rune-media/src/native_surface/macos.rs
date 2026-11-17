@@ -102,6 +102,10 @@ impl PixelBuffer {
             Some(v) if unsafe { cf_equal(&v, kCVImageBufferYCbCrMatrix_ITU_R_601_4) } => Matrix::Bt601,
             // SAFETY: `kCVImageBufferYCbCrMatrix_ITU_R_709_2` is an immutable static `CFString` constant.
             Some(v) if unsafe { cf_equal(&v, kCVImageBufferYCbCrMatrix_ITU_R_709_2) } => Matrix::Bt709,
+            // AVFoundation names H.264 matrix_coefficients 5 (BT.470BG) and 6 (SMPTE 170M) only by code.
+            Some(v) if ["YCbCrMatrix#5", "YCbCrMatrix#6"].iter().any(|n| cf_equal(&v, &CFString::from_str(n))) => {
+                Matrix::Bt601
+            }
             _ => return Err("unsupported YCbCr matrix; use BT.601 or BT.709".into()),
         };
         // SAFETY: `b` is a live `CVPixelBuffer` and `kCVImageBufferTransferFunctionKey` is a static `CFString` constant.
@@ -324,4 +328,21 @@ fn check(status: i32, operation: &str) -> Result<(), String> {
 }
 fn cf_equal(value: &CFType, string: &CFString) -> bool {
     value == AsRef::<CFType>::as_ref(string)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unnamed_ycbcr_matrix_codes_5_and_6_are_bt601_and_unknown_ones_are_refused() {
+        let buffer = PixelBuffer::from_bytes(&synthetic(16, 16, 0)).unwrap();
+        for (name, want) in [("YCbCrMatrix#5", Some(Matrix::Bt601)), ("YCbCrMatrix#6", Some(Matrix::Bt601)), ("YCbCrMatrix#9", None)] {
+            // SAFETY: `buffer.0` is a live `CVPixelBuffer` this test owns, and the key is a static `CFString` constant.
+            unsafe {
+                buffer.0.set_attachment(kCVImageBufferYCbCrMatrixKey, CFString::from_str(name).as_ref(), CVAttachmentMode::ShouldPropagate);
+            }
+            assert_eq!(buffer.info().ok().map(|(_, _, c)| c.matrix), want, "{name}");
+        }
+    }
 }
