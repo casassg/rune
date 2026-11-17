@@ -528,3 +528,23 @@ fn run_lookups_off_a_grapheme_start_find_nothing() {
     rt.frame(0.0);
     assert_eq!(rt.instances.iter().filter(|i| i.params[1] == crate::render::KIND_GLYPH).count(), 2);
 }
+
+/// An empty list item's caret stands where the first typed character's does: after the block's
+/// indent, as every block shows it. A plain empty paragraph's stays at the edge.
+#[test]
+fn caret_on_an_empty_block_line_stands_after_its_indent() {
+    use crate::edit::Block;
+    let mut ts = TextSystem::default();
+    let mut caret_x = |content: &str, block: Block| {
+        let mut spec = crate::el::TextSpec::new(content.into());
+        spec.wrap = true;
+        spec.cold.blocks = vec![Block::Paragraph, block];
+        let TextLayout::Paragraphs(pl) = ts.layout_text(&spec, true, 2.0, Some(400.0), Alignment::Start, None) else { panic!("by paragraph") };
+        TextFlow::Paragraphs(&pl).caret(2, parley::layout::Affinity::Downstream, 1.0).x0
+    };
+    for block in [Block::Bullet(1), Block::Numbered(0), Block::Quote, Block::Code] {
+        let (empty, filled) = (caret_x("a\n", block), caret_x("a\nx", block));
+        assert!(filled > 0.0 && (empty - filled).abs() < 1e-3, "{block:?}: empty {empty} vs filled {filled}");
+    }
+    assert_eq!(caret_x("a\n", Block::Paragraph), 0.0);
+}

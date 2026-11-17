@@ -114,6 +114,8 @@ pub(crate) struct Paragraph {
     /// Its layout's width and full width, so a later edit that keeps it reads neither from it.
     widths: [f32; 2],
     pub(crate) flow: Flow,
+    /// Its block's room at the line's left and right edges, in px.
+    pad: [f32; 2],
     /// What its layout depends on but the width: its words, their shaping spans, its pills,
     /// block and direction, in the field's style.
     key: u64,
@@ -132,6 +134,7 @@ pub(crate) struct Paragraph {
 /// One layout of a text and where it sits: its whole layout, or one paragraph of a field's.
 #[derive(Clone, Copy)]
 pub(crate) struct Piece<'a> {
+    pad: [f32; 2],
     pub(crate) layout: &'a Layout<Ink>,
     /// A paragraph's own layout, which glyph caching keys on.
     pub(crate) shared: Option<&'a Rc<Layout<Ink>>>,
@@ -149,11 +152,11 @@ pub(crate) struct Piece<'a> {
 
 impl<'a> Piece<'a> {
     fn of_paragraph(k: usize, p: &'a Paragraph) -> Piece<'a> {
-        Piece { layout: &p.layout, shared: Some(&p.layout), start: p.start, end: p.end, y: p.y, height: p.height, flow: p.flow, index: k, isolates: &p.isolates, whole: false }
+        Piece { pad: p.pad, layout: &p.layout, shared: Some(&p.layout), start: p.start, end: p.end, y: p.y, height: p.height, flow: p.flow, index: k, isolates: &p.isolates, whole: false }
     }
 
     fn whole(layout: &'a Layout<Ink>) -> Piece<'a> {
-        Piece { layout, shared: None, start: 0, end: usize::MAX, y: 0.0, height: layout.height(), flow: Flow::of_layout(layout), index: 0, isolates: &[], whole: true }
+        Piece { pad: [0.0; 2], layout, shared: None, start: 0, end: usize::MAX, y: 0.0, height: layout.height(), flow: Flow::of_layout(layout), index: 0, isolates: &[], whole: true }
     }
 
     /// Whether it's a text's one layout rather than a paragraph of a field's.
@@ -363,11 +366,11 @@ impl<'a> TextFlow<'a> {
     }
 
     /// Where an empty paragraph's caret, `size` px wide, starts: its right edge (the width it
-    /// wraps at) when it reads right to left, else 0.
+    /// wraps at, less its block's room) when it reads right to left, else after its block's indent.
     fn blank_start(self, p: &Piece<'_>, size: f32) -> f32 {
         match (p.flow, self) {
-            (Flow::Rtl, TextFlow::Paragraphs(pl)) => (pl.max_width.unwrap_or(pl.width) - size).max(0.0),
-            _ => 0.0,
+            (Flow::Rtl, TextFlow::Paragraphs(pl)) => (pl.max_width.unwrap_or(pl.width) - p.pad[1] - size).max(0.0),
+            _ => p.pad[0],
         }
     }
 
@@ -644,6 +647,8 @@ impl TextSystem {
         for (k, ((a, b, flow, key, isolates, run), kept)) in items.into_iter().enumerate() {
             let block = spec.cold.blocks.get(k).copied().unwrap_or(Block::Paragraph);
             let blocks: &[Block] = if block == Block::Paragraph { &[] } else { std::slice::from_ref(&block) };
+            let indent = (block.indent_pt(style.size) * scale).round();
+            let pad = [indent, if block == Block::Code { indent } else { 0.0 }];
             // A waiting record kept at the same width stays as it was; a run found here waits.
             let wait = match (kept, run) {
                 (Some(o), _) if !o.shaped => Some((o.height, o.widths[0], o.lines, o.layout.clone(), o.run)),
@@ -656,7 +661,7 @@ impl TextSystem {
             if let Some((height, w, lines, layout, run)) = wait {
                 waiting += 1;
                 (width, full_width) = (width.max(w), full_width.max(w));
-                paragraphs.push(Paragraph { start: a, end: b, y: y.round() as f32, height, widths: [w, w], flow, key, isolates, layout, shaped: false, lines, run });
+                paragraphs.push(Paragraph { start: a, end: b, y: y.round() as f32, height, widths: [w, w], flow, pad, key, isolates, layout, shaped: false, lines, run });
                 y += f64::from(height);
                 continue;
             }
@@ -691,7 +696,7 @@ impl TextSystem {
                 _ => (if a == b { layout.height().max(line) } else { layout.height() }, [layout.width(), layout.full_width()]),
             };
             (width, full_width) = (width.max(widths[0]), full_width.max(widths[1]));
-            paragraphs.push(Paragraph { start: a, end: b, y: y.round() as f32, height, widths, flow, key, isolates, layout, shaped: true, lines: 1, run: false });
+            paragraphs.push(Paragraph { start: a, end: b, y: y.round() as f32, height, widths, flow, pad, key, isolates, layout, shaped: true, lines: 1, run: false });
             y += f64::from(height);
         }
         let (asc, desc) = self.primary_extents(style.family, style.weight, style.italic).unwrap_or((0.8, 0.2));

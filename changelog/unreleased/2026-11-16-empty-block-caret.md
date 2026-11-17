@@ -1,0 +1,1 @@
+- Edit: the caret on an empty list, quote or code line stands after the block's indent, where the first typed character does, not at the line's left edge (`|3.`).
